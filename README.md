@@ -59,6 +59,11 @@ Example (using SHA-256):
 
 Even a **tiny change in input** produces a completely different hash (the **avalanche effect**).
 
+
+
+
+
+
 ---
 
 ### 3.2 Why Hashing Matters
@@ -77,6 +82,18 @@ In the context of this paper, hashing provides **integrity guarantees for extrem
   - Reads the file sequentially in small blocks (e.g., 1 MB).
   - Continuously updates the hash until the entire file is processed.
   - Simple and memory-efficient, but **very slow for extremely large files**.  
+  
+  Pseudo-code:
+  
+    ``` 
+    function naive_hash(file, block_size):
+        initialize hasher (e.g., SHA-256)
+        open file for reading
+        while not end of file:
+            read next block of size = block_size
+            update hasher with block
+        return final hash digest
+    ```
 
 - **List-Based Hashing:**
   - Splits the file into **large chunks** (e.g., 1 GB).
@@ -84,12 +101,47 @@ In the context of this paper, hashing provides **integrity guarantees for extrem
   - Combines all chunk hashes into a final “super-hash.”  
   - Advantage: faster verification of modified files (only re-hash affected chunks).  
 
-This mirrors the challenge faced in **massive ML models**, where list-based hashing is more scalable.
+  Pseudo-code:
+
+  ```
+    function list_based_hash(file, chunk_size, block_size):
+        chunk_hashes = []
+        open file for reading
+        while not end of file:
+            read next chunk of size = chunk_size
+            initialize chunk_hasher (e.g., SHA-256)
+            while not end of chunk:
+                read next block of size = block_size
+                update chunk_hasher with block
+            append chunk_hasher.digest() to chunk_hashes
+        concatenate all chunk_hashes into one string/list
+        final_hasher = SHA-256(concatenated chunk_hashes)
+        return final_hasher.digest()
+  ```
+
+<!-- This mirrors the challenge faced in **massive ML models**, where list-based hashing is more scalable. -->
 
 ---
 
-### 3.4 Illustrative Example
-For a **3.5 GB file** with 1 GB chunks:
+### 3.4 Illustrative Examples
+
+#### - Example A: Naive Hashing
+For a **3.5 GB file** (read sequentially in 1 MB blocks):
+
+- Block 1 → `b1`  
+- Block 2 → `b2`  
+- …  
+- Block N → `bn`  
+
+Final naive hash = `hash(b1 || b2 || ... || bn)`  
+
+If even a single byte changes in the file (say in Block 72), the **entire file must be re-hashed** from the beginning.
+
+
+
+#### - Example B: List-Based Hashing
+For the same **3.5 GB file**, using **1 GB chunks**:
+
 1. Chunk 1 → `h1`  
 2. Chunk 2 → `h2`  
 3. Chunk 3 → `h3`  
@@ -97,7 +149,8 @@ For a **3.5 GB file** with 1 GB chunks:
 
 Final list-hash = `hash(h1 || h2 || h3 || h4)`  
 
-If only Chunk 2 changes, we don’t need to re-hash the entire 3.5 GB file — only `h2`.
+If only Chunk 2 changes, we don’t need to re-hash the entire 3.5 GB file — only `h2`.  
+This illustrates the **efficiency advantage** of list-based hashing at large scales.
 
 ---
 
@@ -193,6 +246,37 @@ Thus, our experiment should be viewed as a **simplified reproduction** that illu
 
 ---
 
+## 9. Which Method Performs Better?
+
+### In the Original Paper
+- **List-based hashing** outperforms **naive hashing** significantly for **very large files (≥100 GB up to 1 TB)**.  
+- The advantage comes from its chunked design:
+  - Only modified chunks need to be re-hashed.  
+  - Processing time scales better when handling massive model checkpoints.  
+- **Naive hashing** becomes increasingly impractical at these scales, since it always requires a full sequential pass through the entire file.
+
+**Winner in the original paper:** **List-Based Hashing** (scales better for very large data).
+
+
+### In Our Reproduction (1 MB → 4 GB)
+- For small files (1 MB), list-based hashing is slightly faster.  
+- For medium to larger files (100 MB → 4 GB), both naive and list-based hashing scale **linearly and nearly identically**.  
+- The divergence in performance does not appear at our tested scale because the files are not large enough.
+
+**Winner in our reproduction:** **Neither clearly outperforms**; both behave almost the same within the tested range.
+
+---
+
+### Summary
+- At small to medium file sizes, **naive and list-based hashing are comparable**.  
+- At very large file sizes (the paper’s focus), **naive hashing is outperformed** and **list-based hashing is superior**.  
+
+✅ The method that is **outperformed in the original paper** is: **Naive Hashing**.
+
+
+
+---
+
 ## 8. Conclusion
 
 This reproduction demonstrates that even under modest resource constraints (Colab + laptop), it is possible to replicate the **key findings** of the original figure:
@@ -200,7 +284,8 @@ This reproduction demonstrates that even under modest resource constraints (Cola
 - Hashing runtime scales linearly with file size.  
 - Both naive and list-based hashing are similar up to several GB.  
 - The methodology is sound and reproducible.  
+- Naive Hashing outperformed on the original work.
 
-**Limitations** include smaller file size range, fewer machines, and absence of real-world model checkpoint timings. Nonetheless, this simplified reproduction provides a meaningful approximation of the original experiment and can serve as a pedagogical demonstration of the methodology.
+Limitations include smaller file size range, fewer machines, and absence of real-world model checkpoint timings. Nonetheless, this simplified reproduction provides a meaningful approximation of the original experiment and can serve as a pedagogical demonstration of the methodology.
 
 
