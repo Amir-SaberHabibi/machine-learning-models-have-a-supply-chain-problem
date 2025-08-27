@@ -1,5 +1,3 @@
-<!-- # 📑 Reproducing Figure 2: Hashing Performance (Naive vs List-Based) -->
-
 ## 1. Introduction
 
 This document provides a comprehensive analysis of the paper [*Machine Learning Models Have a Supply Chain Problem*](https://arxiv.org/pdf/2505.22778), including a reproduction of Figure 2, which depicts **the average of five runs for large-scale file hashing from 1 byte to 1 terabyte**. For simplification and compatibility with local machines, the analysis was conducted on a smaller, adjustable scale.
@@ -11,6 +9,10 @@ The original paper presents **Figure 2**, which evaluates the runtime performanc
 - **Overhead plateau** for tiny files (<1 KB).
 - **List-based advantage** for extremely large files (>100 GB).
 - **Hardware diversity** effects (M1 vs. M3 showing different scaling).
+
+Original figure as indicated on the paper:
+
+![Alt text](src/paper/figure2.png)
 
 In this report, we attempt to **reproduce Figure 2 under resource-constrained settings** using:
 - **Google Colab (cloud VM)** and a **local laptop (up to 4 GB file size)**.
