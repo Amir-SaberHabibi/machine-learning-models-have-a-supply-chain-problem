@@ -143,7 +143,7 @@ If only Chunk 2 changes, we don’t need to re-hash the entire 3.5 GB file — o
 
 The results are plotted on a **log–log scale**, similar to the original paper’s figure:
 
-![Alt text](src\evaluation\plot.png)
+![Alt text](src/evaluation/plot.png)
 
 
 
